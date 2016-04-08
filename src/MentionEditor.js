@@ -1,4 +1,4 @@
-const classnames = require('classnames');
+const cx = require('classnames');
 
 // just a tiny rangy instead of google rangy
 // to support old browsers, you can import google rangy in the html file
@@ -189,12 +189,12 @@ export default class MentionEditor extends React.Component {
 
     render() {
         let t = this;
-        let _className = classnames({
+        let _className = cx({
             'mentionField': true,
             [t.props.className]: !!t.props.className
         });
         return <div className={_className}>
-            <div className="mentionEditor" ref="editor"
+            <div className={cx({"mentionEditor": true, "focus": t.state.focus})} ref="editor"
                  contentEditable={contentEditableValue}
                  style={{height: t.props.height}}
                  onInput={t.emitChange.bind(t)}
