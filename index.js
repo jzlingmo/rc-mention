@@ -8,6 +8,22 @@ import MentionEditor from './src'
 import Styles from './dist/MentionEditor.css'
 import DemoStyles from './index.css'
 
+const parseUA = ()=> {
+    var ua = navigator.userAgent;
+    var isIpad = ua.match(/(iPad).*OS\s([\d_]+)/),
+        isIphone = !isIpad && ua.match(/(iPhone\sOS)\s([\d_]+)/),
+        isAndroid = ua.match(/(Android)\s+([\d.]+)/),
+        isOtherMobile = ua.match(/Windows Phone|BB/);
+    return {
+        isIpad: isIpad,
+        isIphone: isIphone,
+        isAndroid: isAndroid,
+        isMobile: isIphone || isAndroid || isOtherMobile,
+    };
+};
+
+const UA = parseUA();
+
 const ModalService = ({
     _queue: [],
     init(){
@@ -46,8 +62,10 @@ class Modal extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
+            title: '',
             show: props.show
-        }
+        };
+        this.hasActions = (props.okText + props.cancelText) !== '';
     }
 
     showModal() {
@@ -57,6 +75,23 @@ class Modal extends React.Component {
         ModalService.doOpen(this.innerHideModal.bind(this));
         this.props.onShow && this.props.onShow();
         document.body.className = document.body.className + ' modalOpen';
+    }
+
+    onOk() {
+        var data;
+        if (this.onBeforeOk) {
+            data = this.onBeforeOk();
+            if (!data) {
+                return false
+            }
+        }
+        this.props.onOk && this.props.onOk(data);
+        this.hideModal();
+    }
+
+    onCancel() {
+        this.props.onCancel && this.props.onCancel();
+        this.hideModal();
     }
 
     hideModal() {
@@ -76,14 +111,30 @@ class Modal extends React.Component {
         var props = this.props;
         var state = this.state;
         var Component = props.component;
+        var actions = [];
+        if (this.hasActions) {
+            this.props.okText && actions.push(
+                <button className="btn btn-ok" onClick={this.onOk.bind(this)}>{this.props.okText}</button>
+            );
+            this.props.cancelText && actions.push(
+                <button className="btn btn-cancel" onClick={this.onCancel.bind(this)}>{this.props.cancelText}</button>
+            );
+            if (actions.length === 2 && UA.isMobile) {
+                actions = actions.reverse();
+            }
+        }
         return <div className={cx({
             [t.props.className]: !!t.props.className,
             'modalWrapper': true,
             'active': state.show
         })}>
             <div className="modal">
-                <span onClick={this.hideModal} className="closeIcon" />
-                {state.show ? <Component {...props.data} {...props.listener} modal={this}/> : ''}
+                <div className="modalTitle">{this.state.title}</div>
+                <span className="closeIcon" onClick={this.hideModal.bind(this)}/>
+                <div className={cx({"modalContent": true, "hasActions": this.hasActions})}>
+                    {state.show ? <Component {...props.data} {...props.listener} modal={this}/> : ''}
+                </div>
+                {this.hasActions ? <div className="modalActions">{actions}</div> : null}
             </div>
         </div>
     }
@@ -119,7 +170,7 @@ class SelectPage extends React.Component {
                 },
                 {
                     name: 'Jordana Brewster',
-                    avatar: 'http://mediamass.net/jdd/public/documents/celebrities/3877.jpg',
+                    avatar: 'https://ss1.baidu.com/6ONXsjip0QIZ8tyhnq/it/u=3407298466,4230891213&fm=58',
                     id: 1804
                 },
                 {
@@ -129,6 +180,25 @@ class SelectPage extends React.Component {
                 }
             ],
         }
+    }
+
+    componentDidMount() {
+        let t = this;
+        this._setModalTitle();
+        this.props.modal && (this.props.modal.onBeforeOk = ()=> {
+            return t.getSelectedArr();
+        });
+    }
+
+    getSelectedArr(){
+        let arr = [];
+        let map = this.state.selected;
+        for(let id in map){
+            if(map.hasOwnProperty(id)){
+                arr.push(map[id])
+            }
+        }
+        return arr;
     }
 
     onItemClick(idx) {
@@ -142,23 +212,18 @@ class SelectPage extends React.Component {
         }
         this.setState({
             selected: objectAssign({}, selected)
-        })
+        });
+        this._setModalTitle();
     }
 
-    onSelected(){
-        let map = this.state.selected;
-        let persons = [];
-        for(var id in map){
-            if(map.hasOwnProperty(id)){
-                persons.push(map[id])
-            }
-        }
-        this.props.onSuccess && this.props.onSuccess(persons);
-        this.props.modal.hideModal();
+    _setModalTitle() {
+        var keys = Object.keys(this.state.selected);
+        this.props.modal.setState({
+            title: keys.length + ' Selected'
+        });
     }
 
     render() {
-        let selectedCount = Object.keys(this.state.selected).length;
         return <div id="selectPage">
             <div id="list">
                 {this.state.list.map((item, idx)=>
@@ -173,11 +238,6 @@ class SelectPage extends React.Component {
                     </div>
                 )}
             </div>
-            <div className="actions">
-                <button className="btn" onClick={this.onSelected.bind(this)}>
-                    OK {selectedCount ? <span>({selectedCount} selected)</span> : null}
-                </button>
-            </div>
         </div>
     }
 }
@@ -187,30 +247,26 @@ class Page extends React.Component {
         super(props);
         this.state = {
             value: '',
-            addCallback: ()=>{}
+            addCallback: ()=> {
+            }
         }
     }
 
     choosePerson(addFn) {
-        let persons = [];
-        let onSelected = (persons)=> {
-            addFn(persons.map((person)=> {
-                // can transform data here
-                return {
-                    id: person.id,
-                    name: person.name
-                }
-            }))
-        };
-
-        this.setState({
-            addCallback: onSelected
-        });
-
         this.refs.modal.showModal();
     }
 
-    triggerMention(){
+    onSelected(persons) {
+        this.refs.editor.onMentionAdd((persons || []).map((person)=> {
+            // can transform data here
+            return {
+                id: person.id,
+                name: person.name
+            }
+        }));
+    }
+
+    triggerMention() {
         this.refs.editor.triggerMention();
     }
 
@@ -231,8 +287,12 @@ class Page extends React.Component {
                 <p className="title">Formatted Value:</p>
                 <div style={{padding: '10px'}}>{this.state.value}</div>
             </div>
-            <Modal ref="modal" component={SelectPage}
-                   listener={{onSuccess: this.state.addCallback}}/>
+            <Modal ref="modal"
+                   component={SelectPage}
+                   onOk={this.onSelected.bind(this)}
+                   okText="Ok"
+                   cancelText="Cancel"
+            />
         </div>
     }
 }

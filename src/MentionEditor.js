@@ -58,6 +58,9 @@ export default class MentionEditor extends React.Component {
     }
 
     onMentionAdd(persons) {
+        if(!persons || persons.length === 0){
+            return
+        }
         let t = this;
         let editor = this.refs.editor;
         let selection = rangy.getSelection();
