@@ -1,8 +1,8 @@
 const cx = require('classnames');
 
 // just a tiny rangy instead of google rangy
-// to support old browsers, you can import google rangy in the html file
-// rangy here will automatically be enhanced
+// to support old ie browsers, you can use google rangy instead
+// but bookmark methods are different with google rangy
 const rangy = require('./rangy');
 
 //webkit browsers support 'plaintext-only'
@@ -18,7 +18,7 @@ export default class MentionEditor extends React.Component {
         super(props);
         this.state = {
             focus: false,
-            // todo temporarily not supported to set initial value for caret problem
+            // temporarily not supported to set initial value for caret problem
             // or just can be used as prop once
             value: props.value
         };
@@ -42,7 +42,6 @@ export default class MentionEditor extends React.Component {
             mentionNode.value = t.props.formatDisplay(person);
             fragment.appendChild(mentionNode);
         });
-        fragment.appendChild(document.createTextNode(''));
         return fragment
     }
 
@@ -68,7 +67,7 @@ export default class MentionEditor extends React.Component {
 
         // go to position to insert
         if (t._bookmark && document.getElementById(t._bookmark.startNode)) {
-            range = rangy.moveToBookmark(t._bookmark, range);
+            range = rangy.moveToBookmark2(t._bookmark, range);
         } else {
             // else to move caret to the end & use this range
             range = this._setCaretToEnd(editor);
@@ -79,15 +78,16 @@ export default class MentionEditor extends React.Component {
         let lastChild = mentionNodes.lastChild; // before insert
         range.insertNode(mentionNodes);
 
-        // 1#reset _bookmark if not trigger blur
+        // reset _bookmark after insert
         range.setStartAfter(lastChild, 0);
         range.collapse(true);
-        // do select
+        // do range select
         selection.removeAllRanges();
         selection.addRange(range);
         t._clearBookmark();
-        t._bookmark = rangy.createBookmark(range, true);
-        editor.blur(); // 1#trigger focus after select person in the extra modal
+        t._bookmark = rangy.createBookmark2(range, true);
+        // trigger focus after select person in the extra modal
+        editor.blur();
         t.emitChange();
     }
 
@@ -121,7 +121,9 @@ export default class MentionEditor extends React.Component {
                 range.setStart(range.commonAncestorContainer, originStr.length - 1);
                 // save range position
                 t._clearBookmark();
-                t._bookmark = rangy.createBookmark(range, true);
+                t._bookmark = rangy.createBookmark2(range, true);
+                t._isAtBlur = true;
+                editor.blur();
                 t.triggerMention();
             }
         }
@@ -157,12 +159,19 @@ export default class MentionEditor extends React.Component {
     onBlur(e) {
         let t = this;
         t.setState({focus: false});
-        // will cover type @
-        //let sel = rangy.getSelection();
-        //let range = sel.getRangeAt(0);
-        //range.collapse(false);
-        //t._clearBookmark();
-        //t._bookmark = rangy.createBookmark(range, true);
+        if(t._isAtBlur){
+            t._isAtBlur = false;
+            return
+        }
+        let sel = rangy.getSelection();
+        if(sel.rangeCount === 0){
+            t._bookmark = null;
+        }else{
+            let range = sel.getRangeAt(0);
+            range.collapse(false);
+            t._clearBookmark();
+            t._bookmark = rangy.createBookmark2(range, true);
+        }
     }
 
     _clearBookmark(){

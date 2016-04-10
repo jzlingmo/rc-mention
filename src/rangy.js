@@ -7,7 +7,7 @@ var rangy = {
     createRange (){
         return document.createRange();
     },
-    createBookmark(range, serializable){
+    createBookmark2(range, serializable){
         var startNode, endNode;
         var baseId;
         var clone;
@@ -54,7 +54,7 @@ var rangy = {
         }
     },
 
-    moveToBookmark(bookmark, range){
+    moveToBookmark2(bookmark, range){
         var serializable = bookmark.serializable,
             startNode = serializable ? document.getElementById(bookmark.startNode) : bookmark.startNode,
             endNode = serializable ? document.getElementById(bookmark.endNode) : bookmark.endNode;

@@ -83,6 +83,7 @@ body{
     width: 100%;
     min-height: 100%;
     background: #fff;
+    z-index: 10;
 }
 .modal .modalContent{
     position: absolute;
@@ -142,9 +143,10 @@ body{
 }
 .modalActions .btn{
     display: block;
-    padding: 8px;
     outline: none;
     cursor: pointer;
+    height: 42px;
+    line-height: 42px;
 
     -webkit-box-flex:1;
     -webkit-flex:1;
