@@ -42,6 +42,7 @@ body{
     padding-left: 80px;
 }
 #list .item.active{
+    border-right: 3px solid #2691F7;
     background: #e0e0e0;
 }
 #list .item + .item{
@@ -84,6 +85,7 @@ body{
     min-height: 100%;
     background: #fff;
     z-index: 10;
+
 }
 .modal .modalContent{
     position: absolute;
@@ -185,4 +187,42 @@ body{
 
 body.modalOpen{
     overflow: hidden;
+}
+
+.animated {
+    -webkit-animation-duration: 0.3s;
+    animation-duration: 0.3s;
+    -webkit-animation-fill-mode: both;
+    animation-fill-mode: both;
+}
+
+@-webkit-keyframes slideInUp {
+    from {
+        -webkit-transform: translate3d(0, 100%, 0);
+        transform: translate3d(0, 100%, 0);
+        visibility: visible;
+    }
+
+    to {
+        -webkit-transform: translate3d(0, 0, 0);
+        transform: translate3d(0, 0, 0);
+    }
+}
+
+@keyframes slideInUp {
+    from {
+        -webkit-transform: translate3d(0, 100%, 0);
+        transform: translate3d(0, 100%, 0);
+        visibility: visible;
+    }
+
+    to {
+        -webkit-transform: translate3d(0, 0, 0);
+        transform: translate3d(0, 0, 0);
+    }
+}
+
+.slideInUp {
+    -webkit-animation-name: slideInUp;
+    animation-name: slideInUp;
 }

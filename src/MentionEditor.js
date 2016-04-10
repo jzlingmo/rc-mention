@@ -1,9 +1,9 @@
-const cx = require('classnames');
+import cx from 'classnames'
 
 // just a tiny rangy instead of google rangy
 // to support old ie browsers, you can use google rangy instead
 // but bookmark methods are different with google rangy
-const rangy = require('./rangy');
+import rangy from './rangy';
 
 //webkit browsers support 'plaintext-only'
 const contentEditableValue = (function () {
