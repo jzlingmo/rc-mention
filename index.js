@@ -50,7 +50,7 @@ class Page extends React.Component {
                            onChange={onChange.bind(this)}
             />
             <div><span className="mentionBtn" onClick={this.triggerMention.bind(this)}>@ someone</span></div>
-            <div className="section">
+            <div>
                 <p className="title">Formatted Value:</p>
                 <div style={{padding: '10px'}}>{this.state.value}</div>
             </div>
