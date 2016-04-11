@@ -253,6 +253,9 @@ form {
   background: #fff;
   padding: 20px;
 }
+small{
+  font-size: 80%;
+}
 
 /*******************************************************************************
 Full-Width Styles
@@ -357,7 +360,7 @@ Full-Width Styles
 }
 
 #main_content {
-  padding-top: 40px;
+  padding: 40px 20px 20px 20px;
 }
 
 #footer_wrap {
