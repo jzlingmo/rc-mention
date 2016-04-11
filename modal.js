@@ -1,3 +1,23 @@
+import React, {PropTypes} from 'react'
+import cx from 'classnames'
+
+
+const parseUA = ()=> {
+    var ua = navigator.userAgent;
+    var isIpad = ua.match(/(iPad).*OS\s([\d_]+)/),
+        isIphone = !isIpad && ua.match(/(iPhone\sOS)\s([\d_]+)/),
+        isAndroid = ua.match(/(Android)\s+([\d.]+)/),
+        isOtherMobile = ua.match(/Windows Phone|BB/);
+    return {
+        isIpad: isIpad,
+        isIphone: isIphone,
+        isAndroid: isAndroid,
+        isMobile: isIphone || isAndroid || isOtherMobile,
+    };
+};
+
+const UA = parseUA();
+
 const ModalService = ({
     _queue: [],
     init(){
