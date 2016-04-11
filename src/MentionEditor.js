@@ -23,7 +23,7 @@ export default class MentionEditor extends React.Component {
             // or just can be used as prop once
             value: props.value || ''
         };
-        this._markRange = null;
+        this._bookmark = null;
     }
 
     triggerMention() {
@@ -67,8 +67,8 @@ export default class MentionEditor extends React.Component {
         let range = rangy.createRange();
 
         // go to position to insert
-        if (t._markRange) {
-            range = t._markRange;
+        if (t._bookmark) {
+            range = t._bookmark;
         } else {
             // else to move caret to the end & use this range
             range = this._setCaretToEnd(editor);
@@ -79,13 +79,13 @@ export default class MentionEditor extends React.Component {
         let lastChild = mentionNodes.lastChild; // before insert
         range.insertNode(mentionNodes);
 
-        // reset _markRange after insert
+        // reset _bookmark after insert
         range.setStartAfter(lastChild);
         range.collapse(true);
         // do range select
         selection.removeAllRanges();
         selection.addRange(range);
-        t._markRange = range.cloneRange();
+        t._bookmark = range.cloneRange();
         // trigger focus after select person in the extra modal
         //editor.blur();
         t.emitChange();
@@ -99,7 +99,7 @@ export default class MentionEditor extends React.Component {
         let sel = rangy.getSelection();
         let range = sel.rangeCount === 0 ? null : sel.getRangeAt(0);
 
-        t._markRange = range.cloneRange();
+        t._bookmark = range.cloneRange();
 
         // #2 whether a change made
         let lastHtml = t.lastHtml;
@@ -141,7 +141,7 @@ export default class MentionEditor extends React.Component {
                 // set range's start position before choose contact
                 range.setStart(range.commonAncestorContainer, originStr.length - 1);
                 // save range position
-                t._markRange = range.cloneRange();
+                t._bookmark = range.cloneRange();
                 editor.blur();
                 t.triggerMention();
             }
@@ -189,11 +189,11 @@ export default class MentionEditor extends React.Component {
         // if not focus right now (for some mobile browsers e.g. old ios safari)
         let editor = this.refs.editor;
         let selection = rangy.getSelection();
-        if(t._markRange){
+        if(t._bookmark){
             selection.removeAllRanges();
-            selection.addRange(t._markRange);
+            selection.addRange(t._bookmark);
         }else{
-            t._markRange = this._setCaretToEnd().cloneRange();
+            t._bookmark = this._setCaretToEnd().cloneRange();
         }
         // make it focus faster
         editor.focus();
@@ -203,7 +203,7 @@ export default class MentionEditor extends React.Component {
         let t = this;
         let selection = rangy.getSelection();
         if(selection.rangeCount !== 0){
-            t._markRange = selection.getRangeAt(0).cloneRange();
+            t._bookmark = selection.getRangeAt(0).cloneRange();
         }
     }
 
