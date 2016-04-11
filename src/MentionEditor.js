@@ -182,13 +182,13 @@ export default class MentionEditor extends React.Component {
 
     onClick(e) {
         let t = this;
-        let editor = this.refs.editor;
-        let selection = rangy.getSelection();
-        t._markRange = selection.getRangeAt(0).cloneRange();
-        if (t.state.focus) { // in pc it is already focused
+        t.doMarkRange();
+        if (t.state.focus) {
             return
         }
-        // set caret to the end of editor
+        // if not focus right now (for some mobile browsers e.g. old ios safari)
+        let editor = this.refs.editor;
+        let selection = rangy.getSelection();
         if(t._markRange){
             selection.removeAllRanges();
             selection.addRange(t._markRange);
@@ -197,6 +197,14 @@ export default class MentionEditor extends React.Component {
         }
         // make it focus faster
         editor.focus();
+    }
+
+    doMarkRange(){
+        let t = this;
+        let selection = rangy.getSelection();
+        if(selection.rangeCount !== 0){
+            t._markRange = selection.getRangeAt(0).cloneRange();
+        }
     }
 
     render() {
@@ -213,6 +221,7 @@ export default class MentionEditor extends React.Component {
                  onFocus={(e)=>{t.setState({focus: true})}}
                  onBlur={t.onBlur.bind(t)}
                  onClick={t.onClick.bind(t)}
+                 onTouchEnd={t.doMarkRange.bind(t)}
             ></div>
             {!(t.state.focus || t.state.value) ?
                 <div className="mentionPlaceholder">{t.props.placeholder}</div> : ''}
