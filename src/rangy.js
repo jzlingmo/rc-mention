@@ -1,5 +1,3 @@
-// todo if google rangy exists should extend that
-
 var myrangy;
 if(window.rangy){
     window.rangy.init();
