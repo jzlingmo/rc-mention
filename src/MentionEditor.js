@@ -1,8 +1,9 @@
+import React, {PropTypes} from 'react'
 import cx from 'classnames'
 
 // just a tiny rangy instead of google rangy
-// to support old ie browsers, you can use google rangy instead
-// but bookmark methods are different with google rangy
+// to support old ie browsers, you can just import google rangy
+// and ./rangy automatically use that rangy
 import rangy from './rangy';
 
 //webkit browsers support 'plaintext-only'
@@ -20,7 +21,7 @@ export default class MentionEditor extends React.Component {
             focus: false,
             // temporarily not supported to set initial value for caret problem
             // or just can be used as prop once
-            value: props.value
+            value: props.value || ''
         };
         this._bookmark = null;
     }
@@ -66,8 +67,8 @@ export default class MentionEditor extends React.Component {
         let range = rangy.createRange();
 
         // go to position to insert
-        if (t._bookmark && document.getElementById(t._bookmark.startNode)) {
-            range = rangy.moveToBookmark2(t._bookmark, range);
+        if (t._bookmark) {
+            range = t._bookmark;
         } else {
             // else to move caret to the end & use this range
             range = this._setCaretToEnd(editor);
@@ -79,21 +80,37 @@ export default class MentionEditor extends React.Component {
         range.insertNode(mentionNodes);
 
         // reset _bookmark after insert
-        range.setStartAfter(lastChild, 0);
+        range.setStartAfter(lastChild);
         range.collapse(true);
         // do range select
         selection.removeAllRanges();
         selection.addRange(range);
-        t._clearBookmark();
-        t._bookmark = rangy.createBookmark2(range, true);
+        t._bookmark = range.cloneRange();
         // trigger focus after select person in the extra modal
-        editor.blur();
+        //editor.blur();
         t.emitChange();
     }
 
-    emitChange() {
+    emitChange(e) { // keyup
         let t = this;
         let editor = this.refs.editor;
+
+        // #1 mark current range
+        let sel = rangy.getSelection();
+        let range = sel.rangeCount === 0 ? null : sel.getRangeAt(0);
+
+        t._bookmark = range.cloneRange();
+
+        // #2 whether a change made
+        let lastHtml = t.lastHtml;
+        let currentHtml = editor.innerHTML;
+        if(lastHtml === currentHtml){
+            // no change made
+            return
+        }
+        t.lastHtml = currentHtml;
+
+        // #3 trigger content change
         let content = t.extractContents(editor);
         content = content.replace(/^\n/, '').replace(/\n$/, '').replace(/\n\n/g, '\n'); //format
         if (content == '') { // clean extra <br/> in ios
@@ -104,15 +121,19 @@ export default class MentionEditor extends React.Component {
         });
         t.props.onChange && t.props.onChange(content);
 
-        // type @
+        // #4 if type @
+        if(!range){
+            // not in edit mode
+            return
+        }
         let lastLen = t.totalLen;
         let len = content.length;
         t.totalLen = len;
-        if (lastLen && len < lastLen) { // delete action
+        if (lastLen && len < lastLen) {
+            // delete action
             return
         }
-        let sel = rangy.getSelection();
-        let range = sel.getRangeAt(0);
+
         if (range.commonAncestorContainer.nodeType === Node.TEXT_NODE) {
             range.setStart(range.commonAncestorContainer, 0);
             let originStr = range.toString();
@@ -120,9 +141,7 @@ export default class MentionEditor extends React.Component {
                 // set range's start position before choose contact
                 range.setStart(range.commonAncestorContainer, originStr.length - 1);
                 // save range position
-                t._clearBookmark();
-                t._bookmark = rangy.createBookmark2(range, true);
-                t._isAtBlur = true;
+                t._bookmark = range.cloneRange();
                 editor.blur();
                 t.triggerMention();
             }
@@ -159,41 +178,33 @@ export default class MentionEditor extends React.Component {
     onBlur(e) {
         let t = this;
         t.setState({focus: false});
-        if(t._isAtBlur){
-            t._isAtBlur = false;
-            return
-        }
-        let sel = rangy.getSelection();
-        if(sel.rangeCount === 0){
-            t._bookmark = null;
-        }else{
-            let range = sel.getRangeAt(0);
-            range.collapse(false);
-            t._clearBookmark();
-            t._bookmark = rangy.createBookmark2(range, true);
-        }
-    }
-
-    _clearBookmark(){
-        let t = this;
-        let start, end;
-        if(t._bookmark && t._bookmark.serializable){
-            start = document.getElementById(t._bookmark.startNode);
-            end = document.getElementById(t._bookmark.endNode);
-            start && start.remove();
-            end && end.remove();
-        }
     }
 
     onClick(e) {
         let t = this;
+        t.doMarkRange();
         if (t.state.focus) {
             return
         }
-        // set caret to the end of editor
-        this._setCaretToEnd();
+        // if not focus right now (for some mobile browsers e.g. old ios safari)
+        let editor = this.refs.editor;
+        let selection = rangy.getSelection();
+        if(t._bookmark){
+            selection.removeAllRanges();
+            selection.addRange(t._bookmark);
+        }else{
+            t._bookmark = this._setCaretToEnd().cloneRange();
+        }
         // make it focus faster
-        e.target.focus();
+        editor.focus();
+    }
+
+    doMarkRange(){
+        let t = this;
+        let selection = rangy.getSelection();
+        if(selection.rangeCount !== 0){
+            t._bookmark = selection.getRangeAt(0).cloneRange();
+        }
     }
 
     render() {
@@ -206,10 +217,11 @@ export default class MentionEditor extends React.Component {
             <div className={cx({"mentionEditor": true, "focus": t.state.focus})} ref="editor"
                  contentEditable={contentEditableValue}
                  style={{height: t.props.height}}
-                 onInput={t.emitChange.bind(t)}
+                 onKeyUp={t.emitChange.bind(t)}
                  onFocus={(e)=>{t.setState({focus: true})}}
                  onBlur={t.onBlur.bind(t)}
                  onClick={t.onClick.bind(t)}
+                 onTouchEnd={t.doMarkRange.bind(t)}
             ></div>
             {!(t.state.focus || t.state.value) ?
                 <div className="mentionPlaceholder">{t.props.placeholder}</div> : ''}
@@ -229,13 +241,13 @@ MentionEditor.defaultProps = {
 
 // http://facebook.github.io/react/docs/reusable-components.html
 MentionEditor.propTypes = {
-    className: React.PropTypes.string,
-    placeholder: React.PropTypes.string,
-    onChange: React.PropTypes.func,
-    onMentionTrigger: React.PropTypes.func,
-    formatDisplay: React.PropTypes.func,
-    value: React.PropTypes.string,
-    height: React.PropTypes.string,
+    className: PropTypes.string,
+    placeholder: PropTypes.string,
+    onChange: PropTypes.func,
+    onMentionTrigger: PropTypes.func,
+    formatDisplay: PropTypes.func,
+    value: PropTypes.string,
+    height: PropTypes.string,
 };
 
 MentionEditor.displayName = 'MentionEditor';
