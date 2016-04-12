@@ -1,7 +1,6 @@
 import React, {PropTypes} from 'react'
 import cx from 'classnames'
 
-
 const parseUA = ()=> {
     var ua = navigator.userAgent;
     var isIpad = ua.match(/(iPad).*OS\s([\d_]+)/),
