@@ -68,3 +68,14 @@ class Page extends React.Component {
 }
 ReactDOM.render(<Page />, document.getElementById('main'));
 ```
+
+## use rangy lib
+
+[Rangy](https://github.com/timdown/rangy/) is for ie browsers(lt9).
+
+Just include lib and enjoy(Available in v2).
+
+```html
+<!-- if you want to use rangy for lt9 ie browsers -->
+<script src="//cdn.bootcss.com/rangy/1.3.0/rangy-core.min.js"></script>
+```
