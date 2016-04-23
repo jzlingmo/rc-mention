@@ -91,7 +91,7 @@ export default class MentionEditor extends React.Component {
         t.emitChange();
     }
 
-    emitChange(e) { // keyup
+    emitChange(e) { // on input & mention add
         let t = this;
         let editor = this.refs.editor;
 
@@ -122,10 +122,6 @@ export default class MentionEditor extends React.Component {
         t.props.onChange && t.props.onChange(content);
 
         // #4 if type @
-        if(!range){
-            // not in edit mode
-            return
-        }
         let lastLen = t.totalLen;
         let len = content.length;
         t.totalLen = len;
@@ -134,7 +130,7 @@ export default class MentionEditor extends React.Component {
             return
         }
 
-        if (range.commonAncestorContainer.nodeType === Node.TEXT_NODE) {
+        if (range && range.commonAncestorContainer.nodeType === Node.TEXT_NODE) {
             range.setStart(range.commonAncestorContainer, 0);
             let originStr = range.toString();
             if (originStr.substr(-1, 1) === '@') {
@@ -217,10 +213,11 @@ export default class MentionEditor extends React.Component {
             <div className={cx({"mentionEditor": true, "focus": t.state.focus})} ref="editor"
                  contentEditable={contentEditableValue}
                  style={{height: t.props.height}}
-                 onKeyUp={t.emitChange.bind(t)}
+                 onInput={t.emitChange.bind(t)}
                  onFocus={(e)=>{t.setState({focus: true})}}
                  onBlur={t.onBlur.bind(t)}
                  onClick={t.onClick.bind(t)}
+                 onKeyUp={t.doMarkRange.bind(t)}
                  onTouchEnd={t.doMarkRange.bind(t)}
             ></div>
             {!(t.state.focus || t.state.value) ?
