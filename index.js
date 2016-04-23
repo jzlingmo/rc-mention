@@ -52,7 +52,7 @@ class Page extends React.Component {
             <div><span className="mentionBtn" onClick={this.triggerMention.bind(this)}>@ someone</span></div>
             <div>
                 <p className="title">Formatted Value:</p>
-                <div style={{padding: '10px'}}>{this.state.value}</div>
+                <div className="value">{this.state.value}</div>
             </div>
             <Modal ref="modal"
                    component={SelectPage}
