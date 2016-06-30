@@ -31,6 +31,14 @@ export default class MentionEditor extends React.Component {
         t.props.onMentionTrigger(t.onMentionAdd.bind(t));
     }
 
+    _getEditorNode() {
+        var editor = this.refs.editor;
+        if (editor.getDOMNode) {
+            editor = editor.getDOMNode();
+        }
+        return editor
+    }
+
     _createMentionNode(persons) {
         let t = this;
         let fragment = document.createDocumentFragment();
@@ -62,7 +70,7 @@ export default class MentionEditor extends React.Component {
             return
         }
         let t = this;
-        let editor = this.refs.editor;
+        let editor = this._getEditorNode();
         let selection = rangy.getSelection();
         let range = rangy.createRange();
 
@@ -82,24 +90,27 @@ export default class MentionEditor extends React.Component {
         // reset _bookmark after insert
         range.setStartAfter(lastChild);
         range.collapse(true);
-        // do range select
+        // do range select to focus
         selection.removeAllRanges();
         selection.addRange(range);
         t._bookmark = range.cloneRange();
-        // trigger focus after select person in the extra modal
-        //editor.blur();
+        // give the option to focus
+        // for mobile may not display keyboard after do range select to focus
+        // fixme find another solution
+        if (!t.props.addFocus) {
+            editor.blur();
+        }
         t.emitChange();
     }
 
     emitChange(e) { // on input & mention add
         let t = this;
-        let editor = this.refs.editor;
+        let editor = this._getEditorNode();
 
         // #1 mark current range
         let sel = rangy.getSelection();
-        let range = sel.rangeCount === 0 ? null : sel.getRangeAt(0);
-
-        t._bookmark = range.cloneRange();
+        let range = sel.rangeCount === 0 ? t._bookmark : sel.getRangeAt(0);
+        t._bookmark = range ? range.cloneRange() : null;
 
         // #2 whether a change made
         let lastHtml = t.lastHtml;
@@ -145,7 +156,7 @@ export default class MentionEditor extends React.Component {
     }
 
     extractContents(editor) {
-        editor = editor || this.refs.editor;
+        editor = editor || this._getEditorNode();
         let t = this;
         let nodes = editor.childNodes;
         let content = '';
@@ -177,22 +188,7 @@ export default class MentionEditor extends React.Component {
     }
 
     onClick(e) {
-        let t = this;
-        t.doMarkRange();
-        if (t.state.focus) {
-            return
-        }
-        // if not focus right now (for some mobile browsers e.g. old ios safari)
-        let editor = this.refs.editor;
-        let selection = rangy.getSelection();
-        if(t._bookmark){
-            selection.removeAllRanges();
-            selection.addRange(t._bookmark);
-        }else{
-            t._bookmark = this._setCaretToEnd().cloneRange();
-        }
-        // make it focus faster
-        editor.focus();
+        this.doMarkRange();
     }
 
     doMarkRange(){
@@ -210,7 +206,7 @@ export default class MentionEditor extends React.Component {
             [t.props.className]: !!t.props.className
         });
         return <div className={_className}>
-            <div className={cx({"mentionEditor": true, "focus": t.state.focus})} ref="editor"
+            <div className={cx({"mentionEditor": true, "needsclick": true, "focus": t.state.focus})} ref="editor"
                  contentEditable={contentEditableValue}
                  style={{height: t.props.height}}
                  onInput={t.emitChange.bind(t)}
@@ -233,6 +229,7 @@ MentionEditor.defaultProps = {
     formatValue: (person)=> {
         return '[' + person.name + '](' + person.id + ')'
     },
+    addFocus: false,
     height: '200'
 };
 
@@ -243,6 +240,7 @@ MentionEditor.propTypes = {
     onChange: PropTypes.func,
     onMentionTrigger: PropTypes.func,
     formatDisplay: PropTypes.func,
+    addFocus: React.PropTypes.bool,
     value: PropTypes.string,
     height: PropTypes.string,
 };
