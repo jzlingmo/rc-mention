@@ -1,6 +1,7 @@
 .idea/
 /dist/bundle.js
 /dist/bundleV2.js
+/lib
 
 # Logs
 logs

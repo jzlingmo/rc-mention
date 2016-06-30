@@ -1,0 +1,9 @@
+.idea/
+/dist/bundle.js
+/dist/bundleV2.js
+
+# Logs
+logs
+*.log
+npm-debug.log*
+node_modules
