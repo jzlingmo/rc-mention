@@ -1,5 +1,6 @@
-# rc-mention
+# rc-mention ![npm version](https://img.shields.io/npm/v/rc-mention.svg?style=flat)
 react mention component
+
 
 <img width="630" height="430" src="https://img.alicdn.com/tps/TB1XEyKMpXXXXbBXVXXXXXXXXXX-1260-800.png" />
 
